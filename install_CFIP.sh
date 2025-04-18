@@ -6,11 +6,25 @@ echo "请按照提示输入配置信息。"
 read -p "Cloudflare API Token: " input
 CF_API_TOKEN=$(echo "$input" | tr -d '\r')
 
-read -p "Cloudflare Account ID: " input
-ACCOUNT_ID=$(echo "$input" | tr -d '\r')
+while true; do
+    read -p "Cloudflare Account ID (必须是32位字符，不是邮箱): " input
+    ACCOUNT_ID=$(echo "$input" | tr -d '\r')
+    if [[ ${#ACCOUNT_ID} -eq 32 ]]; then
+        break
+    else
+        echo "⚠️ 输入错误：Account ID 应该是32位字符，请重新输入。"
+    fi
+done
 
-read -p "Cloudflare List ID: " input
-LIST_ID=$(echo "$input" | tr -d '\r')
+while true; do
+    read -p "Cloudflare List ID (必须是32位字符): " input
+    LIST_ID=$(echo "$input" | tr -d '\r')
+    if [[ ${#LIST_ID} -eq 32 ]]; then
+        break
+    else
+        echo "⚠️ 输入错误：List ID 应该是32位字符，请重新输入。"
+    fi
+done
 
 read -p "要监控的域名（用空格隔开，例如: a.com b.com c.com ）: " input
 DOMAIN_INPUT=$(echo "$input" | tr -d '\r')
@@ -21,18 +35,29 @@ TELEGRAM_BOT_TOKEN=$(echo "$input" | tr -d '\r')
 read -p "Telegram Chat ID: " input
 TELEGRAM_CHAT_ID=$(echo "$input" | tr -d '\r')
 
+# 自动格式化域名列表为Python数组
 DOMAIN_NAMES_LIST=$(echo "$DOMAIN_INPUT" | sed "s/ /', '/g")
 DOMAIN_NAMES="['$DOMAIN_NAMES_LIST']"
 
 SCRIPT_PATH="/root/cf_update_ip_list.py"
 LOG_PATH="/root/cf_updater.log"
 
+# 安装依赖
+echo "正在安装Python和requests库..."
 apt update && apt install -y python3 python3-pip
 pip3 install requests --break-system-packages
 
+# 下载 Python 脚本模板
 wget -O /tmp/cf_update_ip_list_template.py https://raw.githubusercontent.com/crane1867/CF_IP_list/main/cf_update_ip_list.py
 
-sed -e "s|{{CF_API_TOKEN}}|$CF_API_TOKEN|g"     -e "s|{{ACCOUNT_ID}}|$ACCOUNT_ID|g"     -e "s|{{LIST_ID}}|$LIST_ID|g"     -e "s|{{DOMAIN_NAMES}}|$DOMAIN_NAMES|g"     -e "s|{{TELEGRAM_BOT_TOKEN}}|$TELEGRAM_BOT_TOKEN|g"     -e "s|{{TELEGRAM_CHAT_ID}}|$TELEGRAM_CHAT_ID|g"     -e "s|{{LOG_FILE}}|$LOG_PATH|g" /tmp/cf_update_ip_list_template.py > $SCRIPT_PATH
+# 替换模板变量
+sed -e "s|{{CF_API_TOKEN}}|$CF_API_TOKEN|g" \
+    -e "s|{{ACCOUNT_ID}}|$ACCOUNT_ID|g" \
+    -e "s|{{LIST_ID}}|$LIST_ID|g" \
+    -e "s|{{DOMAIN_NAMES}}|$DOMAIN_NAMES|g" \
+    -e "s|{{TELEGRAM_BOT_TOKEN}}|$TELEGRAM_BOT_TOKEN|g" \
+    -e "s|{{TELEGRAM_CHAT_ID}}|$TELEGRAM_CHAT_ID|g" \
+    -e "s|{{LOG_FILE}}|$LOG_PATH|g" /tmp/cf_update_ip_list_template.py > $SCRIPT_PATH
 
 chmod +x $SCRIPT_PATH
 
