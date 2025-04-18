@@ -1,2 +1,3 @@
-# CF_IP_list
-根据域名解析自动更新IP列表
+# Cloudflare IP列表自动更新脚本
+
+使用 install_CFIP.sh 自动部署。

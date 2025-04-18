@@ -4,17 +4,13 @@ import ipaddress
 import time
 import datetime
 
-# === Cloudflare配置 ===
 CF_API_TOKEN = '{{CF_API_TOKEN}}'
 ACCOUNT_ID = '{{ACCOUNT_ID}}'
 LIST_ID = '{{LIST_ID}}'
 DOMAIN_NAMES = {{DOMAIN_NAMES}}
 
-# === Telegram通知配置 ===
 TELEGRAM_BOT_TOKEN = '{{TELEGRAM_BOT_TOKEN}}'
 TELEGRAM_CHAT_ID = '{{TELEGRAM_CHAT_ID}}'
-
-# === 日志文件 ===
 LOG_FILE = '{{LOG_FILE}}'
 
 CF_API_URL = f"https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/rules/lists/{LIST_ID}/items"
@@ -32,10 +28,7 @@ def log(message):
 def notify_telegram(message):
     try:
         url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-        payload = {
-            'chat_id': TELEGRAM_CHAT_ID,
-            'text': f"[CF IP更新器] {message}"
-        }
+        payload = {'chat_id': TELEGRAM_CHAT_ID, 'text': f"[CF IP更新器] {message}"}
         requests.post(url, data=payload, timeout=10)
     except Exception as e:
         log(f"Telegram通知失败：{e}")
