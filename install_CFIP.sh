@@ -19,7 +19,7 @@ apt update && apt install -y python3 python3-pip
 pip3 install requests --upgrade
 
 # 创建Python脚本
-cat <<EOF > $SCRIPT_PATH
+cat <<EOF > /root/cf_update_ip_list.py
 import requests
 import socket
 import ipaddress
@@ -34,7 +34,7 @@ DOMAIN_NAMES = ${DOMAIN_INPUT.split()}
 TELEGRAM_BOT_TOKEN = '${TELEGRAM_BOT_TOKEN}'
 TELEGRAM_CHAT_ID = '${TELEGRAM_CHAT_ID}'
 
-LOG_FILE = '${LOG_PATH}'
+LOG_FILE = '${/root/cf_update_ip_list.log}'
 
 CF_API_URL = f"https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/rules/lists/{LIST_ID}/items"
 HEADERS = {
@@ -126,13 +126,13 @@ EOF
 
 chmod +x $SCRIPT_PATH
 
-echo "脚本已生成：$SCRIPT_PATH"
+echo "脚本已生成：cf_update_ip_list.py"
 echo "可以通过以下命令测试："
-echo "python3 $SCRIPT_PATH"
+echo "python3 cf_update_ip_list.py"
 
 read -p "是否需要设置自动运行（每10分钟）？(y/n): " AUTORUN
 if [[ "\$AUTORUN" == "y" ]]; then
-    (crontab -l 2>/dev/null; echo "*/10 * * * * /usr/bin/python3 $SCRIPT_PATH >> /root/cf_cron.log 2>&1") | crontab -
+    (crontab -l 2>/dev/null; echo "*/10 * * * * /usr/bin/python3 cf_update_ip_list.py >> /root/cf_cron.log 2>&1") | crontab -
     echo "已添加定时任务。"
 else
     echo "跳过定时任务配置。"
