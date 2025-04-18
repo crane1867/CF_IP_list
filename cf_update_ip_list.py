@@ -4,13 +4,17 @@ import ipaddress
 import time
 import datetime
 
+# === Cloudflare配置 ===
 CF_API_TOKEN = '{{CF_API_TOKEN}}'
 ACCOUNT_ID = '{{ACCOUNT_ID}}'
 LIST_ID = '{{LIST_ID}}'
 DOMAIN_NAMES = {{DOMAIN_NAMES}}
 
+# === Telegram通知配置 ===
 TELEGRAM_BOT_TOKEN = '{{TELEGRAM_BOT_TOKEN}}'
 TELEGRAM_CHAT_ID = '{{TELEGRAM_CHAT_ID}}'
+
+# === 日志文件 ===
 LOG_FILE = '{{LOG_FILE}}'
 
 CF_API_URL = f"https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/rules/lists/{LIST_ID}/items"
@@ -62,7 +66,7 @@ def build_ip_list(domains):
         ipv4s, ipv6s = resolve_ips(domain)
         final_ips.extend(ipv4s)
         final_ips.extend([format_ipv6_to_cidr(ip) for ip in ipv6s if format_ipv6_to_cidr(ip)])
-    return final_ips
+    return list(set(final_ips))  # 去重，防止重复IP
 
 def upload_to_cloudflare(ip_list):
     items = [{"ip": ip} for ip in ip_list]
