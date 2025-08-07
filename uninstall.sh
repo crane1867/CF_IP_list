@@ -17,7 +17,7 @@ if [ -f /root/cf_updater.log ]; then
 fi
 
 # 清理 crontab 定时任务
-crontab -l | grep -v "cf_update_ip_list.py" | crontab -
+crontab -l | grep -v "cf_ip_update.py" | crontab -
 echo "已从crontab移除自动更新任务。"
 
 # 卸载Python requests库
