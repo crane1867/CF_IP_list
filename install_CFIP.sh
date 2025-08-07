@@ -12,7 +12,7 @@ mkdir -p "$TARGET_DIR"
 cd "$TARGET_DIR"
 
 # 下载核心文件
-for file in cf_ip_update.py .env.example README.md; do
+for file in cf_ip_update.py requirements.txt .env.example README.md; do
   echo "==> 下载 $file"
   curl -fsSL "$GITHUB_RAW_BASE/$file" -o "$file"
 done
