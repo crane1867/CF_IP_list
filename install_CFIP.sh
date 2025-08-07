@@ -51,7 +51,7 @@ fi
 
 # 5. 配置定时任务（默认每小时第 0 分执行）
 CRON_SCHEDULE=$(grep "^CRON_SCHEDULE" .env | cut -d'=' -f2- | tr -d '"')
-CRON_CMD="cd $TARGET_DIR && source $TARGET_DIR/venv/bin/activate && python $TARGET_DIR/cf_ip_update.py"
+CRON_CMD="cd $TARGET_DIR && $TARGET_DIR/venv/bin/python && python $TARGET_DIR/cf_ip_update.py"
 echo "==> 配置 crontab: $CRON_SCHEDULE"
 ( crontab -l | grep -Fv "cf_ip_update.py" ; echo "$CRON_SCHEDULE $CRON_CMD" ) | crontab -
 
