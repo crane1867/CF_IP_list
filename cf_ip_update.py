@@ -28,21 +28,26 @@ logging.basicConfig(
 )
 
 def resolve_ips(domain):
-    """解析 A/AAAA 记录，IPv6 截断为 /64"""
+    """解析 A/AAAA 记录，IPv6 截断为 /64，单项失败时仅记录警告并继续"""
     ips = []
-    try:
-        for rtype in ("A", "AAAA"):
+    for rtype in ("A", "AAAA"):
+        try:
             answers = dns.resolver.resolve(domain, rtype, lifetime=5)
-            for r in answers:
-                ip = ipaddress.ip_address(r.to_text())
-                if ip.version == 6:
-                    # 转成 /64 前缀
-                    net = ipaddress.IPv6Network(f"{ip}/64", strict=False)
-                    ips.append(str(net.network_address) + "/64")
-                else:
-                    ips.append(str(ip))
-    except Exception as e:
-        logging.error(f"{domain} 解析失败：{e}")
+        except dns.resolver.NoAnswer:
+            # 记录到 DEBUG 级别即可，不视为错误中断
+            logging.debug(f"{domain} 无 {rtype} 记录，跳过")
+            continue
+        except Exception as e:
+            logging.error(f"{domain} 查询 {rtype} 失败：{e}")
+            continue
+
+        for r in answers:
+            ip = ipaddress.ip_address(r.to_text())
+            if ip.version == 6:
+                net = ipaddress.IPv6Network(f"{ip}/64", strict=False)
+                ips.append(str(net.network_address) + "/64")
+            else:
+                ips.append(str(ip))
     return ips
 
 def update_ip_list(ips):
@@ -52,12 +57,19 @@ def update_ip_list(ips):
         "Authorization": f"Bearer {CF_API_TOKEN}",
         "Content-Type": "application/json"
     }
-    payload = {"items": [{"ip": ip, "comment": "updated by script"} for ip in sorted(set(ips))]}
-    resp = requests.put(url, json=payload, headers=headers, timeout=10)
-    data = resp.json()
+    items = [{"ip": ip, "comment": "updated by script"} for ip in sorted(set(ips))]
+    resp = requests.put(url, json=items, headers=headers, timeout=30)
+    try:
+        data = resp.json()
+    except ValueError:
+        logging.error(f"非 JSON 响应: HTTP {resp.status_code} – {resp.text}")
+        raise RuntimeError("Cloudflare API 未返回 JSON")
+
     if not data.get("success"):
-        raise RuntimeError(f"Cloudflare API Error: {data.get('errors')}")
-    return len(payload["items"])
+        # 记录完整响应，方便排查
+        logging.error(f"Cloudflare 返回失败: HTTP {resp.status_code} – {data}")
+        raise RuntimeError(f"Cloudflare API Error: {data.get('errors') or data}")
+    return len(items)
 
 def send_telegram(msg):
     """发送 Telegram 通知"""
